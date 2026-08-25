@@ -6,15 +6,18 @@ import {
   CalculateMetadataFunction,
   cancelRender,
   getStaticFiles,
+  interpolate,
   OffthreadVideo,
   Sequence,
+  useCurrentFrame,
   useDelayRender,
   useVideoConfig,
   watchStaticFile,
 } from "remotion";
 import { z } from "zod";
 import { loadFont } from "../load-font";
-import { NoCaptionFile } from "./NoCaptionFile";
+import { BrandWatermark } from "./BrandWatermark";
+import { ProgressBar } from "./ProgressBar";
 import SubtitlePage from "./SubtitlePage";
 
 export type SubtitleProp = {
@@ -51,6 +54,34 @@ const getFileExists = (file: string) => {
 // - 1500 to display a lot of words at a time
 // - 200 to only display 1 word at a time
 const SWITCH_CAPTIONS_EVERY_MS = 1200;
+
+const KenBurnsVideo: React.FC<{ src: string }> = ({ src }) => {
+  const frame = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
+
+  const zoom = interpolate(frame, [0, durationInFrames], [1, 1.08], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
+  return (
+    <AbsoluteFill>
+      <OffthreadVideo
+        style={{
+          objectFit: "cover",
+          transform: `scale(${zoom})`,
+        }}
+        src={src}
+      />
+      <AbsoluteFill
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.45) 100%)",
+        }}
+      />
+    </AbsoluteFill>
+  );
+};
 
 export const CaptionedVideo: React.FC<{
   src: string;
@@ -104,15 +135,9 @@ export const CaptionedVideo: React.FC<{
   }, [subtitles]);
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "white" }}>
-      <AbsoluteFill>
-        <OffthreadVideo
-          style={{
-            objectFit: "cover",
-          }}
-          src={src}
-        />
-      </AbsoluteFill>
+    <AbsoluteFill style={{ backgroundColor: "black" }}>
+      <KenBurnsVideo src={src} />
+      <BrandWatermark />
       {pages.map((page, index) => {
         const nextPage = pages[index + 1] ?? null;
         const subtitleStartFrame = (page.startMs / 1000) * fps;
@@ -135,7 +160,7 @@ export const CaptionedVideo: React.FC<{
           </Sequence>
         );
       })}
-      {getFileExists(subtitlesFile) ? null : <NoCaptionFile />}
+      <ProgressBar />
     </AbsoluteFill>
   );
 };

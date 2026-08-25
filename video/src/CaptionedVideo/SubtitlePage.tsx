@@ -16,9 +16,10 @@ const SubtitlePage: React.FC<{ readonly page: TikTokPage }> = ({ page }) => {
     frame,
     fps,
     config: {
-      damping: 200,
+      damping: 14,
+      mass: 0.5,
     },
-    durationInFrames: 5,
+    durationInFrames: 8,
   });
 
   return (
